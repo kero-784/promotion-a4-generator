@@ -115,7 +115,31 @@
         .a4-render-clone { width: 210mm; height: 297mm; background-color: #fff; color: #333; position: relative; overflow: hidden; font-family: 'Inter', sans-serif; }
         .corner-banner{position:absolute;width:200mm;top:25mm;left:-55mm;transform:rotate(-45deg);background-color:var(--error);color:#fff;text-align:center;font-size:24pt;font-weight:900;letter-spacing:2px;text-transform:uppercase;padding:8mm 0;z-index:2}
         .a4-content-wrapper{position:absolute;top:0;right:0;bottom:0;left:0;padding:20mm;display:flex;flex-direction:column;align-items:center;text-align:center;z-index:1}
-        .item-name{margin-top:60mm;font-size:48pt;font-weight:900;line-height:1.1;color:var(--text-primary);flex-grow:1;display:flex;align-items:center;padding-bottom:10mm;}
+
+        .logo-container {
+            height: 40mm;
+            margin-bottom: 10mm;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .logo-img {
+            max-height: 100%;
+            max-width: 80%;
+            object-fit: contain;
+        }
+        
+        .item-name{
+            font-size:48pt;
+            font-weight:900;
+            line-height:1.1;
+            color:var(--text-primary);
+            flex-grow:1;
+            display:flex;
+            align-items:center;
+            padding-bottom:10mm;
+        }
+
         .price-container-wrapper{margin-top:auto;width:100%;display:flex;flex-direction:column;align-items:center}
         .price-block{border:4px solid var(--brand-primary);padding:15mm;width:90%;box-sizing:border-box;}
         .new-price{font-size:100pt;font-weight:900;line-height:1;color:var(--error);margin-bottom:5mm;}
@@ -129,7 +153,6 @@
     </style>
 </head>
 <body>
-    <!-- (HTML structure is unchanged from previous modern version) -->
     <div class="page-container">
         <aside class="sidebar">
             <header class="sidebar-header">
@@ -176,25 +199,195 @@
         </main>
     </div>
 
+    <!-- --- FULLY UPDATED SCRIPT --- -->
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // All UI-related JS is the same as the modern version...
         const webAppUrl = 'https://script.google.com/macros/s/AKfycbwsyZGO5f4ybQc9GR_zx7hrOHJSrroj320RDRjHSDx-wFBZNPT1yl9BUaS0EpCtKBzdsg/exec';
         let itemState = [];
         let nextItemId = 0;
         const C = { formsContainer: document.getElementById('item-forms-container'), previewCanvas: document.getElementById('preview-canvas'), emptyState: document.getElementById('empty-state'), addItemBtn: document.getElementById('add-item-btn'), validUntilInput: document.getElementById('valid-until'), downloadAllBtn: document.getElementById('download-all-btn'), themeToggleBtn: document.getElementById('theme-toggle-btn'), themeIconLight: document.getElementById('theme-icon-light'), themeIconDark: document.getElementById('theme-icon-dark'),};
-        function init() { bindEventListeners(); initTheme(); updateUIState(); }
-        function bindEventListeners() { C.addItemBtn.addEventListener('click', () => addItemRow()); C.formsContainer.addEventListener('input', handleFormInput); C.formsContainer.addEventListener('click', (e) => { const removeBtn = e.target.closest('.btn-remove-item'); if (removeBtn) { const card = removeBtn.closest('.item-card'); if (card) removeItemRow(parseInt(card.dataset.id)); } }); C.validUntilInput.addEventListener('change', updateAllPreviews); C.previewCanvas.addEventListener('click', (e) => { const downloadBtn = e.target.closest('.btn-download'); if (downloadBtn) generatePdfForItem(downloadBtn); }); C.themeToggleBtn.addEventListener('click', toggleTheme); C.downloadAllBtn.addEventListener('click', downloadAllPdfs); }
-        function addItemRow() { const id = nextItemId++; const newItem = { id, code: '', name: '', priceBefore: null, priceAfter: null, status: 'new', debounceTimer: null }; itemState.push(newItem); const card = document.createElement('div'); card.className = 'item-card is-entering'; card.dataset.id = id; card.innerHTML = ` <div class="item-card-header"> <div class="input-wrapper"> <input type="text" class="item-code" placeholder="Enter Item Code" data-id="${id}"> <div class="status-indicator"> <div class="icon spinner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg></div> <div class="icon check" style="color: var(--success);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg></div> <div class="icon error" style="color: var(--error);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div> </div> </div> <button class="btn-remove-item" aria-label="Remove Item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button> </div> <div class="item-details"> <div class="skeleton-loader"></div> <div class="item-name-display" id="item-name-${id}"></div> <div class="price-inputs"> <input type="number" class="price-before" placeholder="Price Before" data-id="${id}" disabled> <input type="number" class="price-after" placeholder="Price After" data-id="${id}" disabled> </div> </div>`; C.formsContainer.appendChild(card); requestAnimationFrame(() => { card.classList.remove('is-entering'); }); card.querySelector('.item-code').focus(); const posterWrapper = document.createElement('div'); posterWrapper.className = 'poster-wrapper'; posterWrapper.id = `poster-wrapper-${id}`; C.previewCanvas.appendChild(posterWrapper); updateUIState(); }
-        function removeItemRow(id) { const card = document.querySelector(`.item-card[data-id='${id}']`); const posterWrapper = document.getElementById(`poster-wrapper-${id}`); if (card) { card.classList.add('is-leaving'); card.addEventListener('transitionend', () => card.remove(), { once: true }); } if (posterWrapper) { posterWrapper.classList.remove('visible'); posterWrapper.addEventListener('transitionend', () => posterWrapper.remove(), { once: true }); } itemState = itemState.filter(item => item.id !== id); setTimeout(updateUIState, 400); }
-        function updateUIState() { const hasItems = C.formsContainer.children.length > 0; C.emptyState.style.display = hasItems ? 'none' : 'flex'; const hasValidItems = itemState.some(item => item.status === 'found' && item.priceBefore > 0 && item.priceAfter > 0 && item.priceAfter < item.priceBefore); C.downloadAllBtn.disabled = !hasValidItems; }
-        function handleFormInput(e) { if (!e.target.dataset.id) return; const id = parseInt(e.target.dataset.id); const item = itemState.find(i => i.id === id); if (!item) return; if (e.target.classList.contains('item-code')) { item.code = e.target.value; clearTimeout(item.debounceTimer); setCardStatus(id, 'new'); if (item.code) { item.debounceTimer = setTimeout(() => fetchSingleItem(id), 500); } else { const card = document.querySelector(`.item-card[data-id='${id}']`); const nameDisplay = document.getElementById(`item-name-${id}`); const priceInputs = card.querySelectorAll('.price-inputs input'); nameDisplay.textContent = ''; priceInputs.forEach(i => { i.disabled = true; i.value = ''; }); item.priceBefore = null; item.priceAfter = null; updatePreview(id); } } else if (e.target.classList.contains('price-before')) { item.priceBefore = parseFloat(e.target.value) || null; updatePreview(id); } else if (e.target.classList.contains('price-after')) { item.priceAfter = parseFloat(e.target.value) || null; updatePreview(id); } updateUIState(); }
-        async function fetchSingleItem(id) { const item = itemState.find(i => i.id === id); if (!item || !item.code) return; const card = document.querySelector(`.item-card[data-id='${id}']`); const nameDisplay = document.getElementById(`item-name-${id}`); const priceInputs = card.querySelectorAll('.price-inputs input'); setCardStatus(id, 'loading'); try { const response = await fetch(`${webAppUrl}?codes=${encodeURIComponent(item.code)}`); if (!response.ok) throw new Error('Network error. Please try again.'); const data = await response.json(); const foundItem = data.found && data.found[0]; if (foundItem) { item.name = foundItem.name; item.status = 'found'; setCardStatus(id, 'found'); nameDisplay.textContent = item.name; priceInputs.forEach(i => i.disabled = false); } else { throw new Error('Item code not found.'); } } catch (error) { item.status = 'error'; setCardStatus(id, 'error'); nameDisplay.textContent = error.message; priceInputs.forEach(i => { i.disabled = true; i.value = ''; }); item.priceBefore = null; item.priceAfter = null; } updatePreview(id); updateUIState(); }
-        function setCardStatus(id, status) { const card = document.querySelector(`.item-card[data-id='${id}']`); if (!card) return; card.classList.remove('is-loading', 'is-found', 'is-error'); card.querySelectorAll('.status-indicator .icon').forEach(i => i.classList.remove('visible')); switch(status) { case 'loading': card.classList.add('is-loading'); card.querySelector('.spinner').classList.add('visible'); break; case 'found': card.classList.add('is-found'); card.querySelector('.check').classList.add('visible'); break; case 'error': card.classList.add('is-error'); card.querySelector('.error').classList.add('visible'); break; default: break; } }
-        function updateAllPreviews() { itemState.forEach(item => updatePreview(item.id)); }
-        function updatePreview(id) { const item = itemState.find(i => i.id === id); const posterWrapper = document.getElementById(`poster-wrapper-${id}`); if (!item || !posterWrapper) return; const isValidForRender = item.status === 'found' && item.priceBefore > 0 && item.priceAfter > 0 && item.priceAfter < item.priceBefore; if (!isValidForRender) { posterWrapper.innerHTML = ''; posterWrapper.classList.remove('visible'); updateUIState(); return; } let formattedDate = ''; if (C.validUntilInput.value) { const date = new Date(C.validUntilInput.value); const userTimezoneOffset = date.getTimezoneOffset() * 60000; formattedDate = new Date(date.getTime() + userTimezoneOffset).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }); } const discount = Math.round(100 * (item.priceBefore - item.priceAfter) / item.priceBefore); const filename = `${item.name.replace(/[^a-zA-Z0-9]/g, '_')}_${item.priceAfter.toFixed(2)}.pdf`; posterWrapper.innerHTML = ` <div class="a4-page" id="poster-${id}"> <div class="corner-banner">Special Offer</div> <div class="a4-content-wrapper"> <div class="item-name">${item.name}</div> <div class="price-container-wrapper"> <div class="price-block"> <div class="new-price">EGP ${item.priceAfter.toFixed(2)}</div> <div class="old-price-container"> <div class="old-price">EGP ${item.priceBefore.toFixed(2)}</div> <div class="discount-badge">SAVE ${discount}%</div> </div> </div> <div class="validity-date">${formattedDate ? `Offer valid until ${formattedDate}` : ''}</div> </div> </div> </div> <button class="btn-download" data-poster-id="poster-${id}" data-filename="${filename}"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> <span>Download</span> </button>`; setTimeout(() => posterWrapper.classList.add('visible'), 10); updateUIState(); }
         
-        // --- CORE PDF FUNCTION (REVERTED TO A ROBUST METHOD) ---
+        function init() { bindEventListeners(); initTheme(); updateUIState(); }
+
+        function bindEventListeners() { 
+            C.addItemBtn.addEventListener('click', () => addItemRow()); 
+            C.formsContainer.addEventListener('input', handleFormInput); 
+            C.formsContainer.addEventListener('click', (e) => { const removeBtn = e.target.closest('.btn-remove-item'); if (removeBtn) { const card = removeBtn.closest('.item-card'); if (card) removeItemRow(parseInt(card.dataset.id)); } }); 
+            C.validUntilInput.addEventListener('change', updateAllPreviews); 
+            C.previewCanvas.addEventListener('click', (e) => { const downloadBtn = e.target.closest('.btn-download'); if (downloadBtn) generatePdfForItem(downloadBtn); }); 
+            C.themeToggleBtn.addEventListener('click', toggleTheme); 
+            C.downloadAllBtn.addEventListener('click', downloadAllPdfs); 
+        }
+
+        function addItemRow() { 
+            const id = nextItemId++; 
+            const newItem = { id, code: '', name: '', priceBefore: null, priceAfter: null, status: 'new', debounceTimer: null }; 
+            itemState.push(newItem); 
+            const card = document.createElement('div'); 
+            card.className = 'item-card is-entering'; 
+            card.dataset.id = id; 
+            card.innerHTML = ` <div class="item-card-header"> <div class="input-wrapper"> <input type="text" class="item-code" placeholder="Enter Item Code" data-id="${id}"> <div class="status-indicator"> <div class="icon spinner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg></div> <div class="icon check" style="color: var(--success);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg></div> <div class="icon error" style="color: var(--error);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div> </div> </div> <button class="btn-remove-item" aria-label="Remove Item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button> </div> <div class="item-details"> <div class="skeleton-loader"></div> <div class="item-name-display" id="item-name-${id}"></div> <div class="price-inputs"> <input type="number" class="price-before" placeholder="Price Before" data-id="${id}" disabled> <input type="number" class="price-after" placeholder="Price After" data-id="${id}" disabled> </div> </div>`; 
+            C.formsContainer.appendChild(card); 
+            requestAnimationFrame(() => { card.classList.remove('is-entering'); }); 
+            card.querySelector('.item-code').focus(); 
+            const posterWrapper = document.createElement('div'); 
+            posterWrapper.className = 'poster-wrapper'; posterWrapper.id = `poster-wrapper-${id}`; 
+            C.previewCanvas.appendChild(posterWrapper); 
+            updateUIState(); 
+        }
+        
+        function removeItemRow(id) { 
+            const card = document.querySelector(`.item-card[data-id='${id}']`); 
+            const posterWrapper = document.getElementById(`poster-wrapper-${id}`); 
+            if (card) { card.classList.add('is-leaving'); card.addEventListener('transitionend', () => card.remove(), { once: true }); } 
+            if (posterWrapper) { posterWrapper.classList.remove('visible'); posterWrapper.addEventListener('transitionend', () => posterWrapper.remove(), { once: true }); } 
+            itemState = itemState.filter(item => item.id !== id); 
+            setTimeout(updateUIState, 400); 
+        }
+        
+        function updateUIState() { 
+            const hasItems = C.formsContainer.children.length > 0; 
+            C.emptyState.style.display = hasItems ? 'none' : 'flex'; 
+            const hasValidItems = itemState.some(item => item.status === 'found' && item.priceBefore > 0 && item.priceAfter > 0 && item.priceAfter < item.priceBefore); 
+            C.downloadAllBtn.disabled = !hasValidItems; 
+        }
+        
+        function handleFormInput(e) { 
+            if (!e.target.dataset.id) return; 
+            const id = parseInt(e.target.dataset.id); 
+            const item = itemState.find(i => i.id === id); if (!item) return; 
+            if (e.target.classList.contains('item-code')) { 
+                item.code = e.target.value; clearTimeout(item.debounceTimer); 
+                setCardStatus(id, 'new'); 
+                if (item.code) { item.debounceTimer = setTimeout(() => fetchSingleItem(id), 500); } 
+                else { 
+                    const card = document.querySelector(`.item-card[data-id='${id}']`); 
+                    const nameDisplay = document.getElementById(`item-name-${id}`); 
+                    const priceInputs = card.querySelectorAll('.price-inputs input'); 
+                    nameDisplay.textContent = ''; 
+                    priceInputs.forEach(i => { i.disabled = true; i.value = ''; }); 
+                    item.priceBefore = null; item.priceAfter = null; 
+                    updatePreview(id); 
+                } 
+            } else if (e.target.classList.contains('price-before')) { 
+                item.priceBefore = parseFloat(e.target.value) || null; 
+                updatePreview(id); 
+            } else if (e.target.classList.contains('price-after')) { 
+                item.priceAfter = parseFloat(e.target.value) || null; 
+                updatePreview(id); 
+            } 
+            updateUIState(); 
+        }
+        
+        async function fetchSingleItem(id) { 
+            const item = itemState.find(i => i.id === id); 
+            if (!item || !item.code) return; 
+            const card = document.querySelector(`.item-card[data-id='${id}']`); 
+            const nameDisplay = document.getElementById(`item-name-${id}`); 
+            const priceInputs = card.querySelectorAll('.price-inputs input'); 
+            setCardStatus(id, 'loading'); 
+            try { 
+                const response = await fetch(`${webAppUrl}?codes=${encodeURIComponent(item.code)}`); 
+                if (!response.ok) throw new Error('Network error. Please try again.'); 
+                const data = await response.json(); 
+                const foundItem = data.found && data.found[0]; 
+                if (foundItem) { 
+                    item.name = foundItem.name; 
+                    item.status = 'found'; 
+                    setCardStatus(id, 'found'); 
+                    nameDisplay.textContent = item.name; 
+                    priceInputs.forEach(i => i.disabled = false); 
+                } else { throw new Error('Item code not found.'); } 
+            } catch (error) { 
+                item.status = 'error'; 
+                setCardStatus(id, 'error'); 
+                nameDisplay.textContent = error.message; 
+                priceInputs.forEach(i => { i.disabled = true; i.value = ''; }); 
+                item.priceBefore = null; item.priceAfter = null; 
+            } 
+            updatePreview(id); 
+            updateUIState(); 
+        }
+        
+        function setCardStatus(id, status) { 
+            const card = document.querySelector(`.item-card[data-id='${id}']`); 
+            if (!card) return; card.classList.remove('is-loading', 'is-found', 'is-error'); 
+            card.querySelectorAll('.status-indicator .icon').forEach(i => i.classList.remove('visible')); 
+            switch(status) { 
+                case 'loading': card.classList.add('is-loading'); card.querySelector('.spinner').classList.add('visible'); break; 
+                case 'found': card.classList.add('is-found'); card.querySelector('.check').classList.add('visible'); break; 
+                case 'error': card.classList.add('is-error'); card.querySelector('.error').classList.add('visible'); break; 
+                default: break; 
+            } 
+        }
+        
+        function updateAllPreviews() { itemState.forEach(item => updatePreview(item.id)); }
+
+        function updatePreview(id) {
+            const item = itemState.find(i => i.id === id);
+            const posterWrapper = document.getElementById(`poster-wrapper-${id}`);
+            if (!item || !posterWrapper) return;
+            const isValidForRender = item.status === 'found' && item.priceBefore > 0 && item.priceAfter > 0 && item.priceAfter < item.priceBefore;
+            if (!isValidForRender) {
+                posterWrapper.innerHTML = '';
+                posterWrapper.classList.remove('visible');
+                updateUIState();
+                return;
+            }
+            let formattedDate = '';
+            if (C.validUntilInput.value) {
+                const date = new Date(C.validUntilInput.value);
+                const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+                formattedDate = new Date(date.getTime() + userTimezoneOffset).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+            }
+            const discount = Math.round(100 * (item.priceBefore - item.priceAfter) / item.priceBefore);
+            const filename = `${item.name.replace(/[^a-zA-Z0-9]/g, '_')}_${item.priceAfter.toFixed(2)}.pdf`;
+            
+            posterWrapper.innerHTML = `
+                <div class="a4-page" id="poster-${id}">
+                    <div class="corner-banner">Special Offer</div>
+                    <div class="a4-content-wrapper">
+                        <div class="logo-container">
+                            <img src="logo.png" alt="Company Logo" class="logo-img">
+                        </div>
+                        <div class="item-name">${item.name}</div>
+                        <div class="price-container-wrapper">
+                            <div class="price-block">
+                                <div class="new-price">EGP ${item.priceAfter.toFixed(2)}</div>
+                                <div class="old-price-container">
+                                    <div class="old-price">EGP ${item.priceBefore.toFixed(2)}</div>
+                                    <div class="discount-badge">SAVE ${discount}%</div>
+                                </div>
+                            </div>
+                            <div class="validity-date">${formattedDate ? `Offer valid until ${formattedDate}` : ''}</div>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn-download" data-poster-id="poster-${id}" data-filename="${filename}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <span>Download</span>
+                </button>`;
+                
+            setTimeout(() => posterWrapper.classList.add('visible'), 10);
+            updateUIState();
+        }
+
+        async function imageToBase64(url) {
+            try {
+                const response = await fetch(url);
+                const blob = await response.blob();
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+            } catch (error) {
+                console.error('Error converting image to Base64:', error);
+                return '';
+            }
+        }
+        
         async function generatePdfForItem(buttonElement) {
             const posterId = buttonElement.dataset.posterId;
             const filename = buttonElement.dataset.filename;
@@ -213,17 +406,35 @@
             const stagingArea = document.createElement('div');
             
             try {
+                const logoBase64 = await imageToBase64('logo.png'); // Path updated here
+
                 let formattedDate = '';
                 if (C.validUntilInput.value) { const d = new Date(C.validUntilInput.value); formattedDate = new Date(d.getTime() + d.getTimezoneOffset() * 60000).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }); }
                 const discount = Math.round(100 * (originalItemData.priceBefore - originalItemData.priceAfter) / originalItemData.priceBefore);
                 
                 const elementToRender = document.createElement('div');
                 elementToRender.className = 'a4-render-clone';
-                elementToRender.innerHTML = `<div class="corner-banner">Special Offer</div><div class="a4-content-wrapper"><div class="item-name">${originalItemData.name}</div><div class="price-container-wrapper"><div class="price-block"><div class="new-price">EGP ${originalItemData.priceAfter.toFixed(2)}</div><div class="old-price-container"><div class="old-price">EGP ${originalItemData.priceBefore.toFixed(2)}</div><div class="discount-badge">SAVE ${discount}%</div></div></div><div class="validity-date">${formattedDate ? `Offer valid until ${formattedDate}` : ''}</div></div></div>`;
+                elementToRender.innerHTML = `
+                    <div class="corner-banner">Special Offer</div>
+                    <div class="a4-content-wrapper">
+                        <div class="logo-container">
+                            <img src="${logoBase64}" alt="Company Logo" class="logo-img">
+                        </div>
+                        <div class="item-name">${originalItemData.name}</div>
+                        <div class="price-container-wrapper">
+                            <div class="price-block">
+                                <div class="new-price">EGP ${originalItemData.priceAfter.toFixed(2)}</div>
+                                <div class="old-price-container">
+                                    <div class="old-price">EGP ${originalItemData.priceBefore.toFixed(2)}</div>
+                                    <div class="discount-badge">SAVE ${discount}%</div>
+                                </div>
+                            </div>
+                            <div class="validity-date">${formattedDate ? `Offer valid until ${formattedDate}` : ''}</div>
+                        </div>
+                    </div>`;
                 
-                // Create an off-screen staging area to ensure the element is fully rendered by the browser
                 stagingArea.style.position = 'fixed';
-                stagingArea.style.left = '-9999px'; // Move it far off-screen
+                stagingArea.style.left = '-9999px';
                 stagingArea.style.top = '0';
                 stagingArea.appendChild(elementToRender);
                 document.body.appendChild(stagingArea);
@@ -254,10 +465,38 @@
             }
         }
         
-        async function downloadAllPdfs() { C.downloadAllBtn.disabled = true; const validItems = itemState.filter(item => item.status === 'found' && item.priceBefore > 0 && item.priceAfter > 0 && item.priceAfter < item.priceBefore); for (const item of validItems) { const buttonElement = document.querySelector(`#poster-wrapper-${item.id} .btn-download`); if (buttonElement) { await generatePdfForItem(buttonElement); await new Promise(resolve => setTimeout(resolve, 1000)); } } C.downloadAllBtn.disabled = false; }
-        function initTheme() { const savedTheme = localStorage.getItem('theme') || 'light'; setTheme(savedTheme); }
-        function toggleTheme() { const currentTheme = document.documentElement.dataset.theme; const newTheme = currentTheme === 'light' ? 'dark' : 'light'; setTheme(newTheme); }
-        function setTheme(theme) { document.documentElement.dataset.theme = theme; localStorage.setItem('theme', theme); if (theme === 'dark') { C.themeIconLight.style.display = 'none'; C.themeIconDark.style.display = 'block'; } else { C.themeIconLight.style.display = 'block'; C.themeIconDark.style.display = 'none'; } }
+        async function downloadAllPdfs() { 
+            C.downloadAllBtn.disabled = true; 
+            const validItems = itemState.filter(item => item.status === 'found' && item.priceBefore > 0 && item.priceAfter > 0 && item.priceAfter < item.priceBefore); 
+            for (const item of validItems) { 
+                const buttonElement = document.querySelector(`#poster-wrapper-${item.id} .btn-download`); 
+                if (buttonElement) { await generatePdfForItem(buttonElement); await new Promise(resolve => setTimeout(resolve, 1000)); } 
+            } 
+            C.downloadAllBtn.disabled = false; 
+        }
+        
+        function initTheme() { 
+            const savedTheme = localStorage.getItem('theme') || 'light'; 
+            setTheme(savedTheme); 
+        }
+        
+        function toggleTheme() { 
+            const currentTheme = document.documentElement.dataset.theme; 
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light'; 
+            setTheme(newTheme); 
+        }
+        
+        function setTheme(theme) { 
+            document.documentElement.dataset.theme = theme; 
+            localStorage.setItem('theme', theme); 
+            if (theme === 'dark') { 
+                C.themeIconLight.style.display = 'none'; 
+                C.themeIconDark.style.display = 'block'; 
+            } else { 
+                C.themeIconLight.style.display = 'block'; 
+                C.themeIconDark.style.display = 'none'; 
+            } 
+        }
 
         init();
     });
