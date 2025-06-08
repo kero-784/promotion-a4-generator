@@ -133,12 +133,10 @@
             z-index:1;
         }
         
-        /* --- MODIFIED --- .logo-container CSS */
         .logo-container {
             position: absolute;
-            height: 40mm; /* Acts as a max-height boundary */
+            height: 40mm;
             z-index: 5;
-            /* width is now set dynamically via inline style */
         }
         .logo-img {
             max-height: 100%;
@@ -170,6 +168,7 @@
     </style>
 </head>
 <body>
+    <!-- HTML structure is unchanged -->
     <div class="page-container">
         <aside class="sidebar">
             <header class="sidebar-header">
@@ -188,7 +187,6 @@
                         <input type="number" id="logo-pos-x" value="15" placeholder="Right">
                     </div>
                 </div>
-                <!-- ADDED: Logo size control -->
                 <div class="form-group">
                     <label>Logo Size (Width in mm)</label>
                     <input type="number" id="logo-size" value="60" placeholder="Width">
@@ -234,7 +232,14 @@
         const webAppUrl = 'https://script.google.com/macros/s/AKfycbwsyZGO5f4ybQc9GR_zx7hrOHJSrroj320RDRjHSDx-wFBZNPT1yl9BUaS0EpCtKBzdsg/exec';
         let itemState = [];
         let nextItemId = 0;
-        // MODIFIED: Added reference to logo size input
+        
+        // ADDED: Constants for localStorage keys
+        const LS_KEYS = {
+            LOGO_Y: 'promoGenLogoY',
+            LOGO_X: 'promoGenLogoX',
+            LOGO_SIZE: 'promoGenLogoSize'
+        };
+
         const C = { 
             formsContainer: document.getElementById('item-forms-container'), 
             previewCanvas: document.getElementById('preview-canvas'), 
@@ -250,23 +255,50 @@
             logoSizeInput: document.getElementById('logo-size'),
         };
         
-        function init() { bindEventListeners(); initTheme(); updateUIState(); }
+        // MODIFIED: init() now loads saved settings
+        function init() { 
+            loadSavedSettings();
+            bindEventListeners(); 
+            initTheme(); 
+            updateUIState(); 
+        }
 
+        // ADDED: New function to load settings from localStorage
+        function loadSavedSettings() {
+            const savedY = localStorage.getItem(LS_KEYS.LOGO_Y);
+            const savedX = localStorage.getItem(LS_KEYS.LOGO_X);
+            const savedSize = localStorage.getItem(LS_KEYS.LOGO_SIZE);
+
+            if (savedY !== null) C.logoPosYInput.value = savedY;
+            if (savedX !== null) C.logoPosXInput.value = savedX;
+            if (savedSize !== null) C.logoSizeInput.value = savedSize;
+        }
+
+        // MODIFIED: Event listeners now also save to localStorage
         function bindEventListeners() { 
             C.addItemBtn.addEventListener('click', () => addItemRow()); 
             C.formsContainer.addEventListener('input', handleFormInput); 
             C.formsContainer.addEventListener('click', (e) => { const removeBtn = e.target.closest('.btn-remove-item'); if (removeBtn) { const card = removeBtn.closest('.item-card'); if (card) removeItemRow(parseInt(card.dataset.id)); } }); 
             C.validUntilInput.addEventListener('change', updateAllPreviews);
-            C.logoPosXInput.addEventListener('input', updateAllPreviews);
-            C.logoPosYInput.addEventListener('input', updateAllPreviews);
-            // MODIFIED: Added event listener for size input
-            C.logoSizeInput.addEventListener('input', updateAllPreviews);
+            
+            C.logoPosXInput.addEventListener('input', () => {
+                localStorage.setItem(LS_KEYS.LOGO_X, C.logoPosXInput.value);
+                updateAllPreviews();
+            });
+            C.logoPosYInput.addEventListener('input', () => {
+                localStorage.setItem(LS_KEYS.LOGO_Y, C.logoPosYInput.value);
+                updateAllPreviews();
+            });
+            C.logoSizeInput.addEventListener('input', () => {
+                localStorage.setItem(LS_KEYS.LOGO_SIZE, C.logoSizeInput.value);
+                updateAllPreviews();
+            });
+
             C.previewCanvas.addEventListener('click', (e) => { const downloadBtn = e.target.closest('.btn-download'); if (downloadBtn) generatePdfForItem(downloadBtn); }); 
             C.themeToggleBtn.addEventListener('click', toggleTheme); 
             C.downloadAllBtn.addEventListener('click', downloadAllPdfs); 
         }
 
-        // --- Other JS functions are unchanged ---
         function addItemRow() { const id = nextItemId++; const newItem = { id, code: '', name: '', priceBefore: null, priceAfter: null, status: 'new', debounceTimer: null }; itemState.push(newItem); const card = document.createElement('div'); card.className = 'item-card is-entering'; card.dataset.id = id; card.innerHTML = ` <div class="item-card-header"> <div class="input-wrapper"> <input type="text" class="item-code" placeholder="Enter Item Code" data-id="${id}"> <div class="status-indicator"> <div class="icon spinner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg></div> <div class="icon check" style="color: var(--success);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg></div> <div class="icon error" style="color: var(--error);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div> </div> </div> <button class="btn-remove-item" aria-label="Remove Item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button> </div> <div class="item-details"> <div class="skeleton-loader"></div> <div class="item-name-display" id="item-name-${id}"></div> <div class="price-inputs"> <input type="number" class="price-before" placeholder="Price Before" data-id="${id}" disabled> <input type="number" class="price-after" placeholder="Price After" data-id="${id}" disabled> </div> </div>`; C.formsContainer.appendChild(card); requestAnimationFrame(() => { card.classList.remove('is-entering'); }); card.querySelector('.item-code').focus(); const posterWrapper = document.createElement('div'); posterWrapper.className = 'poster-wrapper'; posterWrapper.id = `poster-wrapper-${id}`; C.previewCanvas.appendChild(posterWrapper); updateUIState(); }
         function removeItemRow(id) { const card = document.querySelector(`.item-card[data-id='${id}']`); const posterWrapper = document.getElementById(`poster-wrapper-${id}`); if (card) { card.classList.add('is-leaving'); card.addEventListener('transitionend', () => card.remove(), { once: true }); } if (posterWrapper) { posterWrapper.classList.remove('visible'); posterWrapper.addEventListener('transitionend', () => posterWrapper.remove(), { once: true }); } itemState = itemState.filter(item => item.id !== id); setTimeout(updateUIState, 400); }
         function updateUIState() { const hasItems = C.formsContainer.children.length > 0; C.emptyState.style.display = hasItems ? 'none' : 'flex'; const hasValidItems = itemState.some(item => item.status === 'found' && item.priceBefore > 0 && item.priceAfter > 0 && item.priceAfter < item.priceBefore); C.downloadAllBtn.disabled = !hasValidItems; }
@@ -275,7 +307,7 @@
         function setCardStatus(id, status) { const card = document.querySelector(`.item-card[data-id='${id}']`); if (!card) return; card.classList.remove('is-loading', 'is-found', 'is-error'); card.querySelectorAll('.status-indicator .icon').forEach(i => i.classList.remove('visible')); switch(status) { case 'loading': card.classList.add('is-loading'); card.querySelector('.spinner').classList.add('visible'); break; case 'found': card.classList.add('is-found'); card.querySelector('.check').classList.add('visible'); break; case 'error': card.classList.add('is-error'); card.querySelector('.error').classList.add('visible'); break; default: break; } }
         function updateAllPreviews() { itemState.forEach(item => updatePreview(item.id)); }
 
-        // MODIFIED: updatePreview now reads size and applies it as well
+        // The rest of the JS is unchanged as it already reads from the input fields
         function updatePreview(id) {
             const item = itemState.find(i => i.id === id);
             const posterWrapper = document.getElementById(`poster-wrapper-${id}`);
@@ -289,7 +321,7 @@
             }
             const logoTop = C.logoPosYInput.value || 20;
             const logoRight = C.logoPosXInput.value || 15;
-            const logoWidth = C.logoSizeInput.value || 60; // Get width
+            const logoWidth = C.logoSizeInput.value || 60;
 
             let formattedDate = '';
             if (C.validUntilInput.value) {
@@ -345,7 +377,6 @@
             }
         }
         
-        // MODIFIED: generatePdfForItem now reads size as well
         async function generatePdfForItem(buttonElement) {
             const posterId = buttonElement.dataset.posterId;
             const filename = buttonElement.dataset.filename;
@@ -367,7 +398,7 @@
                 const logoBase64 = await imageToBase64('logo.png');
                 const logoTop = C.logoPosYInput.value || 20;
                 const logoRight = C.logoPosXInput.value || 15;
-                const logoWidth = C.logoSizeInput.value || 60; // Get width
+                const logoWidth = C.logoSizeInput.value || 60;
 
                 let formattedDate = '';
                 if (C.validUntilInput.value) { const d = new Date(C.validUntilInput.value); formattedDate = new Date(d.getTime() + d.getTimezoneOffset() * 60000).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }); }
@@ -398,7 +429,6 @@
                 stagingArea.style.left = '-9999px';
                 stagingArea.style.top = '0';
                 stagingArea.appendChild(elementToRender);
-                document.body.appendChild(stagingArea);
 
                 await new Promise(resolve => setTimeout(resolve, 50));
                 
