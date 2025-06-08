@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editable Promotion Generator</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- 1. APP UI STYLES --- */
+        :root{--bg-color:#f4f4f5;--surface-color:#fff;--border-color:#e4e4e7;--text-primary:#18181b;--text-secondary:#71717a;--brand-blue:#0d3b66;--shine-blue:#0077ff;--shine-red:#ff0033;--dark-black:#111;--success-color:#16a34a;--error-color:#dc2626}body{font-family:'Inter',sans-serif;background-color:var(--bg-color);color:var(--text-primary);margin:0;padding:24px;display:flex;flex-direction:column;align-items:center;gap:32px}.app-container{background-color:var(--surface-color);border:1px solid var(--border-color);border-radius:12px;padding:24px 32px;width:100%;max-width:600px;box-shadow:0 4px 10px -2px rgba(0,0,0,.05)}h1{text-align:center;margin-top:0;color:var(--text-primary);font-weight:900;font-size:1.75rem;border-bottom:1px solid var(--border-color);padding-bottom:16px}.form-group{margin-bottom:20px}label{display:block;font-weight:700;margin-bottom:8px;font-size:.9em;color:var(--text-secondary)}input{width:100%;padding:10px 12px;background-color:#fafafa;border:1px solid var(--border-color);border-radius:8px;color:var(--text-primary);font-size:1em;font-family:'Inter',sans-serif;box-sizing:border-box;transition:border-color .2s,box-shadow .2s}input:focus{outline:0;border-color:var(--brand-blue);box-shadow:0 0 0 3px rgba(13,59,102,.2)}
+        
+        /* UPDATED ITEM ENTRY STYLES */
+        .item-entry{background-color:#fcfcfc;border:1px solid var(--border-color);border-radius:8px;padding:16px;margin-bottom:16px;display:flex;flex-direction:column;gap:12px}
+        .item-entry-header{display:flex;align-items:flex-start;gap:10px}
+        .item-entry-header > div{flex-grow:1}
+        .item-status-container{min-height:1.2em} /* Container for status/name input */
+        .item-name-status{font-weight:700;padding:4px 0;color:var(--text-secondary)}.item-name-status.found{color:var(--success-color)}.item-name-status.not-found{color:var(--error-color)}
+        .item-name-input{font-weight:700;color:var(--success-color);background-color:transparent;border:1px solid transparent;padding-left:0;padding-right:0}
+        .item-name-input:focus{background-color:#f0f9ff;border-color:var(--shine-blue);padding-left:11px;padding-right:11px}
+        .price-inputs{display:grid;grid-template-columns:1fr 1fr;gap:10px}.price-inputs.hidden{display:none}
+        .btn-remove-item{width:40px;height:40px;padding:8px;border-radius:8px;background-color:#fee2e2;color:var(--error-color);border:none;cursor:pointer;font-weight:900;font-size:1.2em;line-height:1;flex-shrink:0}
+        .btn-add-item{width:100%;padding:10px;font-weight:700;border-radius:8px;background-color:#e0e7ff;color:#4338ca;border:1px dashed #c7d2fe}
+        
+        button{width:100%;padding:14px;font-size:1.1em;font-weight:700;border-radius:8px;border:none;cursor:pointer;transition:all .2s ease-in-out;color:#fff}
+        button:disabled{background-color:#d4d4d8;cursor:not-allowed}
+        button:hover:not(:disabled){filter:brightness(1.1);transform:translateY(-2px)}button:active:not(:disabled){transform:scale(.98) translateY(-1px)}
+        #generate-btn{background-color:var(--brand-blue)}#print-btn{background-color:var(--success-color);margin-top:20px}.hidden{display:none}
+
+        /* A4 DESIGN */
+        #a4-preview-container{width:100%;display:flex;flex-direction:column;align-items:center;gap:20px}.a4-page{width:210mm;height:297mm;transform:scale(.35);transform-origin:top center;background-color:#fff;box-shadow:0 5px 25px rgba(0,0,0,.1);color:#333;position:relative;overflow:hidden;font-family:'Inter',sans-serif}.a4-page:not(:last-child){margin-bottom:-180mm}.a4-page:last-child{margin-bottom:-193mm}.corner-banner{position:absolute;width:200mm;top:25mm;left:-55mm;transform:rotate(-45deg);background-color:var(--shine-red);color:#fff;text-align:center;font-size:24pt;font-weight:900;letter-spacing:2px;text-transform:uppercase;padding:8mm 0;box-shadow:0 5px 25px rgba(255,0,51,.4);z-index:2}.a4-content-wrapper{position:absolute;top:0;right:0;bottom:0;left:0;padding:20mm;display:flex;flex-direction:column;align-items:center;text-align:center;z-index:1}.item-name{margin-top:60mm;font-size:48pt;font-weight:900;line-height:1.1;color:var(--dark-black);flex-grow:1;display:flex;align-items:center}.price-block{border:4px solid var(--brand-blue);padding:15mm;width:90%;box-sizing:border-box;margin-bottom:20mm}.new-price{font-size:100pt;font-weight:900;line-height:1;color:var(--shine-red);text-shadow:0 0 10px rgba(255,0,51,.3);margin-bottom:5mm}.old-price-container{display:flex;justify-content:center;align-items:baseline;gap:6mm}.old-price{font-size:32pt;font-weight:700;color:var(--shine-blue);text-decoration:line-through;text-decoration-thickness:3px;text-decoration-color:#a0a0a0;text-shadow:0 0 8px rgba(0,119,255,.3)}.discount-badge{font-size:24pt;font-weight:700;color:var(--shine-red)}.a4-footer{width:100%;text-align:center;font-size:10pt;font-weight:700;color:#999;padding-top:10mm;border-top:1px solid #eee;margin-top:auto}
+
+        /* PRINT STYLES */
+        @media print {@page{size:A4 portrait;margin:0}body,.a4-page{margin:0;padding:0;box-shadow:none;transform:scale(1)}.a4-page{page-break-after:always}}
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <h1>Editable Promotion Generator</h1>
+        <div class="form-group" id="item-entry-list">
+            <label>1. Add Items and Prices</label>
+        </div>
+        <button class="btn-add-item" id="add-item-btn">+ Add Another Item</button>
+        <hr style="border:none; border-top:1px solid #eee; margin: 20px 0;">
+        <div class="form-group">
+            <label for="valid-until">2. Set Expiry Date (Optional)</label>
+            <input type="date" id="valid-until">
+        </div>
+        <button id="generate-btn" disabled>Generate A4 Posters</button>
+    </div>
+
+    <div id="a4-preview-container" class="hidden">
+        <div id="a4-content"></div> 
+        <button id="print-btn">Print / Save as PDF</button>
+    </div>
+
+    <script>
+        const webAppUrl = 'https://script.google.com/macros/s/AKfycbwsyZGO5f4ybQc9GR_zx7hrOHJSrroj320RDRjHSDx-wFBZNPT1yl9BUaS0EpCtKBzdsg/exec'; 
+        let originalBodyContent;
+        let itemState = [];
+        let nextItemId = 0;
+
+        function bindEventListeners() {
+            document.getElementById('add-item-btn')?.addEventListener('click', addItemRow);
+            document.getElementById('generate-btn')?.addEventListener('click', generateDesign);
+            document.getElementById('print-btn')?.addEventListener('click', handlePrint);
+            const list = document.getElementById('item-entry-list');
+            if (list) list.addEventListener('input', handleItemInput);
+        }
+        
+        function handleItemInput(e) {
+            const target = e.target;
+            const itemEntry = target.closest('.item-entry');
+            if (!itemEntry) return;
+
+            const itemId = parseInt(itemEntry.dataset.id);
+            const item = itemState.find(i => i.id === itemId);
+            if (!item) return;
+
+            if (target.classList.contains('item-code')) {
+                clearTimeout(item.debounceTimer);
+                item.debounceTimer = setTimeout(() => fetchSingleItem(itemId), 500);
+            } else if (target.classList.contains('item-name-input')) {
+                item.name = target.value; // Live update the name in our state
+            } else if (target.classList.contains('price-before') || target.classList.contains('price-after')) {
+                checkGenerateButtonState();
+            }
+        }
+
+        function addItemRow() {
+            const list = document.getElementById('item-entry-list');
+            const id = nextItemId++;
+            const newItem = { id, code: '', name: '', status: 'new', debounceTimer: null };
+            itemState.push(newItem);
+
+            const itemDiv = document.createElement('div');
+            itemDiv.classList.add('item-entry');
+            itemDiv.dataset.id = id;
+            itemDiv.innerHTML = `
+                <div class="item-entry-header">
+                    <div><input type="text" class="item-code" placeholder="Enter Item Code"></div>
+                    <button type="button" class="btn-remove-item" title="Remove Item" onclick="removeItemRow(${id})">&times;</button>
+                </div>
+                <div class="item-status-container">
+                    <div class="item-name-status">Awaiting code...</div>
+                </div>
+                <div class="price-inputs hidden">
+                    <div><label>Price Before</label><input type="number" class="price-before" placeholder="e.g., 199.99"></div>
+                    <div><label>Price After</label><input type="number" class="price-after" placeholder="e.g., 149.99"></div>
+                </div>
+            `;
+            list.appendChild(itemDiv);
+            checkGenerateButtonState();
+        }
+
+        function removeItemRow(id) {
+            const itemToRemove = document.querySelector(`.item-entry[data-id='${id}']`);
+            if (itemToRemove) itemToRemove.remove();
+            itemState = itemState.filter(item => item.id !== id);
+            checkGenerateButtonState();
+        }
+
+        async function fetchSingleItem(itemId) {
+            const item = itemState.find(i => i.id === itemId);
+            const row = document.querySelector(`.item-entry[data-id='${itemId}']`);
+            if (!item || !row) return;
+
+            const itemCodeInput = row.querySelector('.item-code');
+            const statusContainer = row.querySelector('.item-status-container');
+            const priceInputs = row.querySelector('.price-inputs');
+            
+            item.code = itemCodeInput.value.trim();
+
+            const renderStatus = (status, text) => {
+                let statusHTML = `<div class="item-name-status ${status}">${text}</div>`;
+                if (item.status === 'found') {
+                    // Create an editable input field if found
+                    statusHTML = `<input type="text" class="item-name-input" value="${item.name}" placeholder="Enter a name">`;
+                }
+                statusContainer.innerHTML = statusHTML;
+            };
+
+            if (!item.code) {
+                item.status = 'new';
+                priceInputs.classList.add('hidden');
+                renderStatus('new', 'Awaiting code...');
+                checkGenerateButtonState();
+                return;
+            }
+
+            renderStatus('fetching', 'Fetching...');
+
+            try {
+                const response = await fetch(`${webAppUrl}?codes=${item.code}`);
+                if (!response.ok) throw new Error(`Network Error`);
+                const data = await response.json();
+                if (data.status !== 'success') throw new Error(data.message);
+
+                const foundItem = data.found && data.found[0];
+                if (foundItem) {
+                    item.name = foundItem.name;
+                    item.status = 'found';
+                    renderStatus('found', `✓ ${item.name}`); // Renders the editable input
+                    priceInputs.classList.remove('hidden');
+                } else {
+                    item.status = 'not-found';
+                    priceInputs.classList.add('hidden');
+                    renderStatus('not-found', `✗ Code not found in sheet`);
+                }
+            } catch (error) {
+                item.status = 'error';
+                priceInputs.classList.add('hidden');
+                renderStatus('not-found', `✗ Error: ${error.message}`);
+            }
+            checkGenerateButtonState();
+        }
+
+        function checkGenerateButtonState() {
+            const generateBtn = document.getElementById('generate-btn');
+            generateBtn.disabled = getValidItems().length === 0;
+        }
+
+        function getValidItems() {
+            return itemState.filter(item => {
+                if (item.status !== 'found') return false;
+                const row = document.querySelector(`.item-entry[data-id='${item.id}']`);
+                if (!row) return false;
+                const priceBefore = parseFloat(row.querySelector('.price-before').value);
+                const priceAfter = parseFloat(row.querySelector('.price-after').value);
+                return !isNaN(priceBefore) && !isNaN(priceAfter) && priceAfter < priceBefore;
+            });
+        }
+        
+        function generateDesign() {
+            const validItems = getValidItems();
+            if (validItems.length === 0) {
+                alert('No valid items to generate. Please ensure at least one item is found and has valid prices (Price After must be less than Price Before).');
+                return;
+            }
+
+            const validUntilDate = document.getElementById('valid-until').value;
+            let formattedDate = '';
+            if (validUntilDate) {
+                const date = new Date(validUntilDate);
+                const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+                formattedDate = new Date(date.getTime() + userTimezoneOffset).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+            }
+
+            const allPagesHTML = validItems.map(item => {
+                // Ensure we use the latest edited name from the state
+                const currentName = item.name; 
+                const row = document.querySelector(`.item-entry[data-id='${item.id}']`);
+                const priceBefore = parseFloat(row.querySelector('.price-before').value);
+                const priceAfter = parseFloat(row.querySelector('.price-after').value);
+                const discount = Math.round(100 * (priceBefore - priceAfter) / priceBefore);
+                
+                return `
+                    <div class="a4-page">
+                        <div class="corner-banner">Special Offer</div>
+                        <div class="a4-content-wrapper">
+                            <div class="item-name">${currentName}</div>
+                            <div class="price-block">
+                                <div class="new-price">EGP ${priceAfter.toFixed(2)}</div>
+                                <div class="old-price-container">
+                                    <div class="old-price">EGP ${priceBefore.toFixed(2)}</div>
+                                    <div class="discount-badge">SAVE ${discount}%</div>
+                                </div>
+                            </div>
+                            <footer class="a4-footer">
+                                ${formattedDate ? `Offer valid until ${formattedDate}` : 'Offer valid for a limited time only.'}
+                            </footer>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('a4-content').innerHTML = allPagesHTML;
+            document.getElementById('a4-preview-container').classList.remove('hidden');
+            document.getElementById('a4-preview-container').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function handlePrint() {
+            const printContent = document.getElementById('a4-content').innerHTML;
+            if (!printContent) return;
+            originalBodyContent = document.body.innerHTML;
+            const printStyle = document.createElement('style');
+            printStyle.innerHTML = `@media print{@page{size:A4 portrait;margin:0}body,.a4-page{margin:0;padding:0;box-shadow:none;transform:scale(1)}.a4-page{page-break-after:always}}`;
+            const newBody = document.createElement('body');
+            newBody.innerHTML = printContent;
+            document.head.appendChild(printStyle);
+            document.body = newBody;
+            window.print();
+            document.head.removeChild(printStyle);
+        }
+
+        window.onafterprint = function() {
+            if (originalBodyContent) {
+                const newBody = document.createElement('body');
+                newBody.innerHTML = originalBodyContent;
+                document.body = newBody;
+                bindEventListeners();
+            }
+        };
+        
+        bindEventListeners();
+        addItemRow();
+    </script>
+</body>
+</html>
