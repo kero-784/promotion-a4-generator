@@ -114,21 +114,36 @@
         
         .a4-render-clone { width: 210mm; height: 297mm; background-color: #fff; color: #333; position: relative; overflow: hidden; font-family: 'Inter', sans-serif; }
         .corner-banner{position:absolute;width:200mm;top:25mm;left:-55mm;transform:rotate(-45deg);background-color:var(--error);color:#fff;text-align:center;font-size:24pt;font-weight:900;letter-spacing:2px;text-transform:uppercase;padding:8mm 0;z-index:2}
-        .a4-content-wrapper{position:absolute;top:0;right:0;bottom:0;left:0;padding:20mm;display:flex;flex-direction:column;align-items:center;text-align:center;z-index:1}
+        
+        /* --- ADDED --- New style for position inputs */
+        .position-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
 
-        /* --- LOGO CONTAINER STYLE (MODIFIED) --- */
+        /* --- MODIFIED --- Poster layout styles */
+        .a4-content-wrapper{
+            position:absolute;
+            top:0;right:0;bottom:0;left:0;
+            padding:20mm;
+            padding-top: 75mm; /* Increased top padding */
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            text-align:center;
+            z-index:1;
+        }
+
         .logo-container {
-            width: 100%;
+            position: absolute;
             height: 40mm;
-            margin-bottom: 10mm;
-            display: flex;
-            justify-content: flex-end; /* Pushes logo to the right */
-            align-items: center;
-            padding-right: 10mm; /* Adds space from the edge */
+            width: 80mm;
+            z-index: 5;
         }
         .logo-img {
             max-height: 100%;
-            max-width: 80%;
+            max-width: 100%;
             object-fit: contain;
         }
         
@@ -156,7 +171,6 @@
     </style>
 </head>
 <body>
-    <!-- HTML BODY IS UNCHANGED -->
     <div class="page-container">
         <aside class="sidebar">
             <header class="sidebar-header">
@@ -167,6 +181,14 @@
                 <div class="form-group">
                     <label for="valid-until">Global Offer Expiry Date (Optional)</label>
                     <input type="date" id="valid-until">
+                </div>
+                 <!-- ADDED: Manual position inputs -->
+                <div class="form-group">
+                    <label>Logo Position (mm from top/right)</label>
+                    <div class="position-inputs">
+                        <input type="number" id="logo-pos-y" value="20" placeholder="Top">
+                        <input type="number" id="logo-pos-x" value="15" placeholder="Right">
+                    </div>
                 </div>
             </div>
             <div class="item-forms-container" id="item-forms-container"></div>
@@ -203,13 +225,26 @@
         </main>
     </div>
 
-    <!-- JAVASCRIPT IS UNCHANGED, AS THE LOGIC REMAINS THE SAME -->
+    <!-- --- FULLY UPDATED SCRIPT --- -->
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         const webAppUrl = 'https://script.google.com/macros/s/AKfycbwsyZGO5f4ybQc9GR_zx7hrOHJSrroj320RDRjHSDx-wFBZNPT1yl9BUaS0EpCtKBzdsg/exec';
         let itemState = [];
         let nextItemId = 0;
-        const C = { formsContainer: document.getElementById('item-forms-container'), previewCanvas: document.getElementById('preview-canvas'), emptyState: document.getElementById('empty-state'), addItemBtn: document.getElementById('add-item-btn'), validUntilInput: document.getElementById('valid-until'), downloadAllBtn: document.getElementById('download-all-btn'), themeToggleBtn: document.getElementById('theme-toggle-btn'), themeIconLight: document.getElementById('theme-icon-light'), themeIconDark: document.getElementById('theme-icon-dark'),};
+        // ADDED: References to new logo position inputs
+        const C = { 
+            formsContainer: document.getElementById('item-forms-container'), 
+            previewCanvas: document.getElementById('preview-canvas'), 
+            emptyState: document.getElementById('empty-state'), 
+            addItemBtn: document.getElementById('add-item-btn'), 
+            validUntilInput: document.getElementById('valid-until'), 
+            downloadAllBtn: document.getElementById('download-all-btn'), 
+            themeToggleBtn: document.getElementById('theme-toggle-btn'), 
+            themeIconLight: document.getElementById('theme-icon-light'), 
+            themeIconDark: document.getElementById('theme-icon-dark'),
+            logoPosYInput: document.getElementById('logo-pos-y'),
+            logoPosXInput: document.getElementById('logo-pos-x'),
+        };
         
         function init() { bindEventListeners(); initTheme(); updateUIState(); }
 
@@ -217,7 +252,10 @@
             C.addItemBtn.addEventListener('click', () => addItemRow()); 
             C.formsContainer.addEventListener('input', handleFormInput); 
             C.formsContainer.addEventListener('click', (e) => { const removeBtn = e.target.closest('.btn-remove-item'); if (removeBtn) { const card = removeBtn.closest('.item-card'); if (card) removeItemRow(parseInt(card.dataset.id)); } }); 
-            C.validUntilInput.addEventListener('change', updateAllPreviews); 
+            C.validUntilInput.addEventListener('change', updateAllPreviews);
+            // ADDED: Event listeners for logo position inputs
+            C.logoPosXInput.addEventListener('input', updateAllPreviews);
+            C.logoPosYInput.addEventListener('input', updateAllPreviews);
             C.previewCanvas.addEventListener('click', (e) => { const downloadBtn = e.target.closest('.btn-download'); if (downloadBtn) generatePdfForItem(downloadBtn); }); 
             C.themeToggleBtn.addEventListener('click', toggleTheme); 
             C.downloadAllBtn.addEventListener('click', downloadAllPdfs); 
@@ -327,6 +365,7 @@
         
         function updateAllPreviews() { itemState.forEach(item => updatePreview(item.id)); }
 
+        // MODIFIED: updatePreview now reads from position inputs and applies an inline style
         function updatePreview(id) {
             const item = itemState.find(i => i.id === id);
             const posterWrapper = document.getElementById(`poster-wrapper-${id}`);
@@ -338,6 +377,9 @@
                 updateUIState();
                 return;
             }
+            const logoTop = C.logoPosYInput.value || 20;
+            const logoRight = C.logoPosXInput.value || 15;
+
             let formattedDate = '';
             if (C.validUntilInput.value) {
                 const date = new Date(C.validUntilInput.value);
@@ -349,11 +391,11 @@
             
             posterWrapper.innerHTML = `
                 <div class="a4-page" id="poster-${id}">
+                    <div class="logo-container" style="top: ${logoTop}mm; right: ${logoRight}mm;">
+                        <img src="logo.png" alt="Company Logo" class="logo-img">
+                    </div>
                     <div class="corner-banner">Special Offer</div>
                     <div class="a4-content-wrapper">
-                        <div class="logo-container">
-                            <img src="logo.png" alt="Company Logo" class="logo-img">
-                        </div>
                         <div class="item-name">${item.name}</div>
                         <div class="price-container-wrapper">
                             <div class="price-block">
@@ -392,6 +434,7 @@
             }
         }
         
+        // MODIFIED: generatePdfForItem also reads position inputs for a consistent result
         async function generatePdfForItem(buttonElement) {
             const posterId = buttonElement.dataset.posterId;
             const filename = buttonElement.dataset.filename;
@@ -411,6 +454,8 @@
             
             try {
                 const logoBase64 = await imageToBase64('logo.png');
+                const logoTop = C.logoPosYInput.value || 20;
+                const logoRight = C.logoPosXInput.value || 15;
 
                 let formattedDate = '';
                 if (C.validUntilInput.value) { const d = new Date(C.validUntilInput.value); formattedDate = new Date(d.getTime() + d.getTimezoneOffset() * 60000).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }); }
@@ -419,11 +464,11 @@
                 const elementToRender = document.createElement('div');
                 elementToRender.className = 'a4-render-clone';
                 elementToRender.innerHTML = `
+                    <div class="logo-container" style="top: ${logoTop}mm; right: ${logoRight}mm;">
+                        <img src="${logoBase64}" alt="Company Logo" class="logo-img">
+                    </div>
                     <div class="corner-banner">Special Offer</div>
                     <div class="a4-content-wrapper">
-                        <div class="logo-container">
-                            <img src="${logoBase64}" alt="Company Logo" class="logo-img">
-                        </div>
                         <div class="item-name">${originalItemData.name}</div>
                         <div class="price-container-wrapper">
                             <div class="price-block">
