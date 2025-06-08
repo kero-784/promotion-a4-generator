@@ -116,12 +116,15 @@
         .corner-banner{position:absolute;width:200mm;top:25mm;left:-55mm;transform:rotate(-45deg);background-color:var(--error);color:#fff;text-align:center;font-size:24pt;font-weight:900;letter-spacing:2px;text-transform:uppercase;padding:8mm 0;z-index:2}
         .a4-content-wrapper{position:absolute;top:0;right:0;bottom:0;left:0;padding:20mm;display:flex;flex-direction:column;align-items:center;text-align:center;z-index:1}
 
+        /* --- LOGO CONTAINER STYLE (MODIFIED) --- */
         .logo-container {
+            width: 100%;
             height: 40mm;
             margin-bottom: 10mm;
             display: flex;
-            justify-content: center;
+            justify-content: flex-end; /* Pushes logo to the right */
             align-items: center;
+            padding-right: 10mm; /* Adds space from the edge */
         }
         .logo-img {
             max-height: 100%;
@@ -153,6 +156,7 @@
     </style>
 </head>
 <body>
+    <!-- HTML BODY IS UNCHANGED -->
     <div class="page-container">
         <aside class="sidebar">
             <header class="sidebar-header">
@@ -199,7 +203,7 @@
         </main>
     </div>
 
-    <!-- --- FULLY UPDATED SCRIPT --- -->
+    <!-- JAVASCRIPT IS UNCHANGED, AS THE LOGIC REMAINS THE SAME -->
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         const webAppUrl = 'https://script.google.com/macros/s/AKfycbwsyZGO5f4ybQc9GR_zx7hrOHJSrroj320RDRjHSDx-wFBZNPT1yl9BUaS0EpCtKBzdsg/exec';
@@ -406,7 +410,7 @@
             const stagingArea = document.createElement('div');
             
             try {
-                const logoBase64 = await imageToBase64('logo.png'); // Path updated here
+                const logoBase64 = await imageToBase64('logo.png');
 
                 let formattedDate = '';
                 if (C.validUntilInput.value) { const d = new Date(C.validUntilInput.value); formattedDate = new Date(d.getTime() + d.getTimezoneOffset() * 60000).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }); }
